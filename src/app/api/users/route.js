@@ -47,10 +47,10 @@ export async function POST(request) {
 //-------------------------------------------------------------------------------------
 export async function PUT(request) {
   try {
-  const { id, firstname, lastname, password } = await request.json();
+  const { id, firstname, lastname, password, username } = await request.json();
   const hashedPassword = await bcrypt.hash(password, 10);
   console.log(hashedPassword);
-  const res = await client.query('UPDATE tbl_users SET firstname = $1, lastname = $2, password = $4 WHERE id = $3  RETURNING *', [firstname, lastname, id, hashedPassword]);
+  const res = await client.query('UPDATE tbl_users SET firstname = $1, lastname = $2, password = $4, username = $5 WHERE id = $3  RETURNING *', [firstname, lastname, id, hashedPassword, username]);
   if (res.rows.length === 0) {
   return new Response(JSON.stringify({ error: 'User not found' }), {
   status: 404,
