@@ -1,3 +1,5 @@
+// pages/api/sensordata.js
+
 import { Pool } from 'pg';
 import dotenv from 'dotenv';
 
@@ -17,7 +19,7 @@ const handleError = (error) => {
 
 export async function GET() {
   try {
-    const result = await pool.query('SELECT * FROM sensor_data');
+    const result = await pool.query('SELECT * FROM sensor_data ORDER BY timestamp DESC LIMIT 10');
     return new Response(JSON.stringify(result.rows), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },

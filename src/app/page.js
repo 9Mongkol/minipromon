@@ -1,95 +1,63 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+// pages/index.js
+
+import { useState, useEffect } from 'react';
 
 export default function Home() {
+  const [flameStatus, setFlameStatus] = useState(false);
+  const [vibrationStatus, setVibrationStatus] = useState(false);
+  const [history, setHistory] = useState([]);
+
+  useEffect(() => {
+    // ฟังก์ชันเพื่อดึงสถานะจาก API
+    const fetchStatus = async () => {
+      try {
+        const response = await fetch('/api/sensordata');
+        const data = await response.json();
+        if (data.length > 0) {
+          const latest = data[0];
+          setFlameStatus(latest.flame_status);
+          setVibrationStatus(latest.vibration_status);
+        }
+      } catch (error) {
+        console.error('Failed to fetch sensor data:', error);
+      }
+    };
+
+    fetchStatus();
+    // ดึงข้อมูลทุก 5 วินาที
+    const intervalId = setInterval(fetchStatus, 5000);
+
+    return () => clearInterval(intervalId);
+  }, []);
+
+  const handleControl = async () => {
+    try {
+      await fetch('/api/control', { method: 'POST' });
+      // อัพเดตประวัติการทำงาน
+      setHistory([...history, { timestamp: new Date().toISOString(), action: 'LED and Laser ON for 2 seconds' }]);
+    } catch (error) {
+      console.error('Failed to control devices:', error);
+    }
+  };
+
   return (
-    <main className={styles.main}>
-      <div className={styles.description}>
-        <p>
-          Get started by editing&nbsp;
-          <code className={styles.code}>src/app/page.js</code>
-        </p>
-        <div>
-          <a
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{" "}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className={styles.vercelLogo}
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
-        </div>
+    <div style={{ padding: '20px' }}>
+      <h1>Sensor Dashboard</h1>
+      <div>
+        <h2>Flame Sensor Status: {flameStatus ? 'Detected' : 'Not Detected'}</h2>
+        <h2>Vibration Sensor Status: {vibrationStatus ? 'Detected' : 'Not Detected'}</h2>
       </div>
-
-      <div className={styles.center}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
+      <button onClick={handleControl} style={{ marginTop: '20px' }}>
+        Activate LED and Laser
+      </button>
+      <div style={{ marginTop: '20px' }}>
+        <h2>History</h2>
+        <ul>
+          {history.map((entry, index) => (
+            <li key={index}>{entry.timestamp} - {entry.action}</li>
+          ))}
+        </ul>
       </div>
-
-      <div className={styles.grid}>
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Docs <span>-&gt;</span>
-          </h2>
-          <p>Find in-depth information about Next.js features and API.</p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Learn <span>-&gt;</span>
-          </h2>
-          <p>Learn about Next.js in an interactive course with&nbsp;quizzes!</p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Templates <span>-&gt;</span>
-          </h2>
-          <p>Explore starter templates for Next.js.</p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Deploy <span>-&gt;</span>
-          </h2>
-          <p>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
+    </div>
   );
 }
