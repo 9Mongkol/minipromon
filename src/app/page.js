@@ -1,4 +1,6 @@
-// pages/index.js
+// src/app/page.js
+
+"use client"; // เพิ่มบรรทัดนี้เพื่อกำหนดให้คอมโพเนนต์เป็น Client Component
 
 import { useState, useEffect } from 'react';
 
