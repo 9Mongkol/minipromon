@@ -1,69 +1,50 @@
 // pages/index.js
-'use client';
 
 import { useState, useEffect } from 'react';
 
-export default function Home() {
-  const [flameStatus, setFlameStatus] = useState(false);
-  const [vibrationStatus, setVibrationStatus] = useState(false);
-  const [history, setHistory] = useState([]);
+const Home = () => {
+  const [status, setStatus] = useState({ flame: false, vibration: false });
+
+  const fetchStatus = async () => {
+    try {
+      const response = await fetch('/api/sensordata');
+      const data = await response.json();
+      setStatus({
+        flame: data.find((item) => item.sensor_id === 1)?.flame_status || false,
+        vibration: data.find((item) => item.sensor_id === 1)?.vibration_status || false,
+      });
+    } catch (error) {
+      console.error('Error fetching status:', error);
+    }
+  };
 
   useEffect(() => {
-    // Fetch initial data
-    fetch('/api/sensordata')
-      .then(response => response.json())
-      .then(data => {
-        if (data.length > 0) {
-          const latest = data[0];
-          setFlameStatus(latest.flame_status);
-          setVibrationStatus(latest.vibration_status);
-        }
-      });
+    fetchStatus();
+    const interval = setInterval(fetchStatus, 5000); // อัพเดตทุก 5 วินาที
+    return () => clearInterval(interval);
   }, []);
 
-  const handleTest = async () => {
+  const testComponents = async () => {
     try {
-      const response = await fetch('/api/test', {
+      await fetch('/api/sensordata', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'test' }),
+        body: JSON.stringify({ sensor_id: 1, vibration_status: true }),
       });
-      const result = await response.json();
-      if (result.success) {
-        alert('LED and laser activated!');
-      } else {
-        alert('Failed to activate LED and laser');
-      }
+      console.log('Test command sent');
     } catch (error) {
-      console.error('Error:', error);
-      alert('An error occurred');
+      console.error('Error sending test command:', error);
     }
   };
 
   return (
-    <div style={{ padding: '20px', fontFamily: 'Arial, sans-serif' }}>
-      <h1>Sensor Dashboard</h1>
-      <div>
-        <h2>Status</h2>
-        <p>Flame Sensor: {flameStatus ? 'Detected' : 'Not Detected'}</p>
-        <p>Vibration Sensor: {vibrationStatus ? 'Detected' : 'Not Detected'}</p>
-      </div>
-      <button
-        onClick={handleTest}
-        style={{ padding: '10px 20px', fontSize: '16px', marginTop: '20px' }}
-      >
-        Test LED and Laser
-      </button>
-      <div>
-        <h2>History</h2>
-        <ul>
-          {history.map((entry, index) => (
-            <li key={index}>
-              {entry.timestamp}: Flame: {entry.flame_status ? 'Detected' : 'Not Detected'}, Vibration: {entry.vibration_status ? 'Detected' : 'Not Detected'}
-            </li>
-          ))}
-        </ul>
-      </div>
+    <div>
+      <h1>Sensor Status</h1>
+      <p>Flame Detected: {status.flame ? 'Yes' : 'No'}</p>
+      <p>Vibration Detected: {status.vibration ? 'Yes' : 'No'}</p>
+      <button onClick={testComponents}>Test Components</button>
     </div>
   );
-}
+};
+
+export default Home;
