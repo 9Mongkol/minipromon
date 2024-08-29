@@ -1,15 +1,11 @@
-// pages/api/get-status.js
+import { NextResponse } from 'next/server';
 
-// Example of how you might fetch the current status of your sensors and LEDs
-export default function handler(req, res) {
-    const status = {
-      flame: false,  // Replace with actual logic to check flame sensor
-      vibration: false,  // Replace with actual logic to check vibration sensor
-      led13: false,  // Replace with actual logic to check the status of LED 13
-      led16: false   // Replace with actual logic to check the status of LED 16
-    };
-  
-    // Return the status as JSON
-    res.status(200).json(status);
-  }
-  
+export async function GET() {
+  // ดึงข้อมูลสถานะจากเซิร์ฟเวอร์หรือฐานข้อมูล
+  const status = {
+    flame: false,  // ตัวอย่างข้อมูล
+    vibration: false,  // ตัวอย่างข้อมูล
+  };
+
+  return NextResponse.json(status);
+}
