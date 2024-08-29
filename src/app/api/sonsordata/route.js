@@ -14,8 +14,8 @@ export default async function handler(req, res) {
   if (req.method === 'POST') {
     const { sensor_id, flame_status, vibration_status } = req.body;
 
-    // ตรวจสอบว่า flame_status และ vibration_status เป็น Boolean หรือไม่
-    if (typeof flame_status !== 'boolean' || typeof vibration_status !== 'boolean') {
+    // ตรวจสอบว่า flame_status และ vibration_status เป็นตัวเลข (0 หรือ 1) หรือไม่
+    if (![0, 1].includes(flame_status) || ![0, 1].includes(vibration_status)) {
       return res.status(400).json({ error: 'Invalid data type for status values' });
     }
 
