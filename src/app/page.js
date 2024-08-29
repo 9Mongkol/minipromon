@@ -1,50 +1,51 @@
-// src/app/page.js
-
-"use client"; // เพิ่มบรรทัดนี้เพื่อกำหนดให้คอมโพเนนต์เป็น Client Component
+"use client";  // Ensure this is a client-side component
 
 import { useState, useEffect } from 'react';
 
 const Home = () => {
+  const [led13Status, setLed13Status] = useState(false);
   const [status, setStatus] = useState({ flame: false, vibration: false });
 
-  const fetchStatus = async () => {
-    try {
-      const response = await fetch('/api/sensordata');
-      const data = await response.json();
-      setStatus({
-        flame: data.find((item) => item.sensor_id === 1)?.flame_status || false,
-        vibration: data.find((item) => item.sensor_id === 1)?.vibration_status || false,
-      });
-    } catch (error) {
-      console.error('Error fetching status:', error);
+  // Function to toggle LED 13
+  const toggleLed13 = async () => {
+    const newStatus = !led13Status;
+    setLed13Status(newStatus);
+
+    const response = await fetch('/api/toggle-led13', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ status: newStatus }),
+    });
+
+    if (response.ok) {
+      console.log('LED 13 toggled successfully');
+    } else {
+      console.error('Failed to toggle LED 13');
     }
   };
 
   useEffect(() => {
+    // Fetch current status from the server
+    const fetchStatus = async () => {
+      const response = await fetch('/api/get-status');
+      const data = await response.json();
+      setStatus(data);
+    };
     fetchStatus();
-    const interval = setInterval(fetchStatus, 5000); // อัพเดตทุก 5 วินาที
-    return () => clearInterval(interval);
   }, []);
-
-  const testComponents = async () => {
-    try {
-      await fetch('/api/sensordata', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sensor_id: 1, vibration_status: true }),
-      });
-      console.log('Test command sent');
-    } catch (error) {
-      console.error('Error sending test command:', error);
-    }
-  };
 
   return (
     <div>
-      <h1>Sensor Status</h1>
-      <p>Flame Detected: {status.flame ? 'Yes' : 'No'}</p>
-      <p>Vibration Detected: {status.vibration ? 'Yes' : 'No'}</p>
-      <button onClick={testComponents}>Test Components</button>
+      <h1>LED Control and Sensor Status</h1>
+      <button onClick={toggleLed13}>
+        {led13Status ? 'Turn Off LED 13' : 'Turn On LED 13'}
+      </button>
+
+      <h2>Sensor Status</h2>
+      <p>Flame Detection: {status.flame ? 'Detected' : 'Not Detected'}</p>
+      <p>Vibration Detection: {status.vibration ? 'Detected' : 'Not Detected'}</p>
     </div>
   );
 };
