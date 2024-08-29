@@ -81,3 +81,42 @@ export async function GET(request) {
         });
     }
 }
+//-----------------------------------------------------------------------------------
+// pages/api/updateLedStatus.js
+
+export async function PUT(request) {
+    try {
+        // Parse the request body as JSON
+        const requestBody = await request.json();
+        const { led_status } = requestBody;
+
+        // Update the led_status in the database
+        const result = await client.query(
+            'UPDATE sensor_data SET led_status = $1 WHERE id = 1  RETURNING *',
+            [led_status]
+        );
+
+        // Check if update was successful
+        if (result.rowCount === 0) {
+            return new Response(JSON.stringify({ error: "Sensor ID not found" }), {
+                status: 404,
+                headers: { ...corsHeaders, "Content-Type": "application/json" },
+            });
+        }
+
+        return new Response(JSON.stringify(result.rows[0]), {
+            status: 200,
+            headers: {
+                ...corsHeaders,
+                "Content-Type": "application/json",
+                "Cache-Control": "no-cache"
+            },
+        });
+    } catch (error) {
+        console.error("Error updating LED status:", error);
+        return new Response(JSON.stringify({ error: "Internal Server Error" }), {
+            status: 500,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+    }
+}

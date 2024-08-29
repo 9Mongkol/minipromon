@@ -1,58 +1,41 @@
-// pages/dashboard.js
 "use client";
+import { useState } from 'react';
 
-import { useEffect, useState } from 'react';
+const Home = () => {
+    const [responseMessage, setResponseMessage] = useState('');
 
-export default function Dashboard() {
-  const [sensorData, setSensorData] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+    const handleUpdate = async (ledStatus) => {
+        try {
+            const response = await fetch('/api/sensordata', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    led_status: ledStatus,
+                }),
+            });
 
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        const response = await fetch('/api/sensordata');
-        if (!response.ok) {
-          throw new Error('Network response was not ok');
+            if (!response.ok) {
+                throw new Error('Failed to update LED status');
+            }
+
+            const data = await response.json();
+            setResponseMessage(`LED status updated to ${data.led_status}`);
+        } catch (error) {
+            console.error('Error:', error);
+            setResponseMessage('Error updating LED status');
         }
-        const data = await response.json();
-        setSensorData(data);
-      } catch (error) {
-        setError(error);
-      } finally {
-        setLoading(false);
-      }
-    }
+    };
 
-    fetchData();
-  }, []);
+    return (
+        <div>
+            <h1>LED Control</h1>
+            <button onClick={() => handleUpdate(1)}>Turn LED ON</button>
+            <button onClick={() => handleUpdate(0)}>Turn LED OFF</button>
+            <p>{responseMessage}</p>
+        </div>
+    );
+};
 
-  if (loading) return <p>Loading...</p>;
-  if (error) return <p>Error: {error.message}</p>;
-
-  return (
-    <div>
-      <h1>Dashboard</h1>
-      <table>
-        <thead>
-          <tr>
-            <th>Sensor ID</th>
-            <th>Flame Status</th>
-            <th>Vibration Status</th>
-            <th>Timestamp</th>
-          </tr>
-        </thead>
-        <tbody>
-          {sensorData.map((data, index) => (
-            <tr key={index}>
-              <td>{data.sensor_id}</td>
-              <td>{data.flame_status ? 'Detected' : 'Not Detected'}</td>
-              <td>{data.vibration_status ? 'Detected' : 'Not Detected'}</td>
-              <td>{new Date(data.timestamp).toLocaleString()}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-}
+export default Home;
