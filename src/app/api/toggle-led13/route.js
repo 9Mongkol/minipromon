@@ -4,7 +4,7 @@ export default async function handler(req, res) {
 
     try {
       // Replace this with your actual endpoint and data handling
-      const response = await fetch('http://<YOUR_PI_PICO_IP>/toggle_led13', {
+      const response = await fetch('http://192.168.43.203/toggle_led13', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
