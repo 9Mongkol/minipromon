@@ -53,3 +53,64 @@ export async function POST(request) {
     return handleError(error);
   }
 }
+
+export async function PUT(request) {
+  try {
+    const { id, sensor_id, vibration_status } = await request.json();
+
+    if (!id || !sensor_id || vibration_status === undefined) {
+      return new Response(JSON.stringify({ error: 'Invalid input data' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    const res = await pool.query(
+      'UPDATE sensor_data SET sensor_id = $1, vibration_status = $2 WHERE id = $3 RETURNING *',
+      [sensor_id, vibration_status, id]
+    );
+
+    if (res.rows.length === 0) {
+      return new Response(JSON.stringify({ error: 'Data not found' }), {
+        status: 404,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    return new Response(JSON.stringify(res.rows[0]), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  } catch (error) {
+    return handleError(error);
+  }
+}
+
+export async function DELETE(request) {
+  try {
+    const { id } = await request.json();
+
+    if (!id) {
+      return new Response(JSON.stringify({ error: 'Invalid input data' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    const res = await pool.query('DELETE FROM sensor_data WHERE id = $1 RETURNING *', [id]);
+
+    if (res.rows.length === 0) {
+      return new Response(JSON.stringify({ error: 'Data not found' }), {
+        status: 404,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    return new Response(JSON.stringify(res.rows[0]), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  } catch (error) {
+    return handleError(error);
+  }
+}

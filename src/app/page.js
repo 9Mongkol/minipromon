@@ -1,57 +1,39 @@
-"use client";  // Ensure this is a client-side component
+// src/app/page.js
+
+"use client";
 
 import { useState, useEffect } from 'react';
 
-const Home = () => {
-  const [led13Status, setLed13Status] = useState(false);
-  const [status, setStatus] = useState({ flame: false, vibration: false });
-
-  // Function to toggle LED 13
-  const toggleLed13 = async () => {
-    const newStatus = !led13Status;
-    setLed13Status(newStatus);
-
-    try {
-      const response = await fetch('/api/toggle-led13', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ status: newStatus }),
-      });
-
-      if (response.ok) {
-        console.log('LED 13 toggled successfully');
-      } else {
-        console.error('Failed to toggle LED 13');
-      }
-    } catch (error) {
-      console.error('Error toggling LED 13:', error);
-    }
-  };
+export default function Home() {
+  const [flameStatus, setFlameStatus] = useState(false);
+  const [vibrationStatus, setVibrationStatus] = useState(false);
 
   useEffect(() => {
-    // Fetch current status from the server
-    const fetchStatus = async () => {
-      const response = await fetch('/api/get-status');
+    const fetchData = async () => {
+      const response = await fetch('/api/sensordata');
       const data = await response.json();
-      setStatus(data);
+      // สมมุติว่าเซ็นเซอร์ส่งข้อมูล flameStatus และ vibrationStatus
+      setFlameStatus(data.flameStatus);
+      setVibrationStatus(data.vibrationStatus);
     };
-    fetchStatus();
+
+    fetchData();
   }, []);
+
+  const handleControl = async () => {
+    await fetch('/api/control', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'toggle' }),
+    });
+  };
 
   return (
     <div>
-      <h1>LED Control and Sensor Status</h1>
-      <button onClick={toggleLed13}>
-        {led13Status ? 'Turn Off LED 13' : 'Turn On LED 13'}
-      </button>
-
-      <h2>Sensor Status</h2>
-      <p>Flame Detection: {status.flame ? 'Detected' : 'Not Detected'}</p>
-      <p>Vibration Detection: {status.vibration ? 'Detected' : 'Not Detected'}</p>
+      <h1>Sensor Status</h1>
+      <p>Flame Sensor: {flameStatus ? 'Detected' : 'Not Detected'}</p>
+      <p>Vibration Sensor: {vibrationStatus ? 'Detected' : 'Not Detected'}</p>
+      <button onClick={handleControl}>Toggle LED & Laser</button>
     </div>
   );
-};
-
-export default Home;
+}
