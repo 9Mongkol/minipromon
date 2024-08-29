@@ -14,6 +14,11 @@ export default async function handler(req, res) {
   if (req.method === 'POST') {
     const { sensor_id, flame_status, vibration_status } = req.body;
 
+    // ตรวจสอบว่า flame_status และ vibration_status เป็น Boolean หรือไม่
+    if (typeof flame_status !== 'boolean' || typeof vibration_status !== 'boolean') {
+      return res.status(400).json({ error: 'Invalid data type for status values' });
+    }
+
     try {
       const client = await pool.connect();
       const query = `
