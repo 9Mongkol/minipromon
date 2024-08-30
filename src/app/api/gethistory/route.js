@@ -7,7 +7,7 @@ const DATABASE_URL = process.env.DATABASE_URL;
 const client = new Pool({
     connectionString: DATABASE_URL,
 });
-
+export const dynamic = "force-dynamic";
 export async function GET() {
     try {
         // Query to get the last 10 sensor data entries ordered by timestamp

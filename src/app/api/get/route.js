@@ -1,5 +1,4 @@
 // pages/api/sensordata.js
-
 import { Pool } from 'pg';
 
 // อ่านค่าการเชื่อมต่อจาก environment variable
@@ -9,7 +8,7 @@ const DATABASE_URL = process.env.DATABASE_URL;
 const client = new Pool({
   connectionString: DATABASE_URL,
 });
-
+export const dynamic = "force-dynamic";
 export async function GET() {
     try {
       const result = await client.query(`
