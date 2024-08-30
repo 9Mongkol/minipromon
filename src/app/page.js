@@ -13,25 +13,31 @@ const Home = () => {
                 const response = await fetch('/api/getrecent');
                 if (!response.ok) throw new Error('Failed to fetch sensor data');
                 const data = await response.json();
-                
+    
                 console.log('Fetched sensor data:', data);
-                
+    
                 // Update sensor status based on received data
                 setSensorStatus({
                     flame: data.flame_status === "0" ? 'Detect' : 'Not Detect',
                     vibration: data.vibration_status === "1" ? 'Detect' : 'Not Detect'
                 });
-
+    
                 // Update LED status
-                console.log(data)
+                setLedStatus(data.led_status);
             } catch (error) {
                 console.error('Error:', error);
                 setSensorStatus({ flame: 'Error', vibration: 'Error' });
             }
         };
-
+    
         fetchRecentData();
+    
+        // Update data every 5 seconds
+        const intervalId = setInterval(fetchRecentData, 2000);
+    
+        return () => clearInterval(intervalId);
     }, []);
+    
 
     const handleUpdate = async (ledStatus) => {
         try {
