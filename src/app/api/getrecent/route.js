@@ -1,0 +1,58 @@
+"use server";
+import { Client } from 'pg';
+import dotenv from 'dotenv';
+
+// Load environment variables
+dotenv.config();
+
+// Initialize PostgreSQL client
+const client = new Client({
+    connectionString: process.env.DATABASE_URL,
+});
+
+// Connect to the database
+client.connect().catch((err) => {
+    console.error("Database connection error:", err);
+});
+
+const corsHeaders = {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization",
+};
+
+export async function GET() {
+    try {
+        // Query the database for the latest record based on timestamp
+        const result = await client.query(`
+            SELECT * 
+            FROM sensor_data
+            ORDER BY timestamp DESC
+            LIMIT 1
+        `);
+
+        if (result.rows.length === 0) {
+            return new Response(JSON.stringify({ error: "No data found" }), {
+                status: 404,
+                headers: { ...corsHeaders, "Content-Type": "application/json" },
+            });
+        }
+
+        const latestData = result.rows[0];
+
+        return new Response(JSON.stringify(latestData), {
+            status: 200,
+            headers: {
+                ...corsHeaders,
+                "Content-Type": "application/json",
+                "Cache-Control": "no-cache"
+            },
+        });
+    } catch (error) {
+        console.error("Error retrieving data:", error);
+        return new Response(JSON.stringify({ error: "Internal Server Error" }), {
+            status: 500,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+    }
+}

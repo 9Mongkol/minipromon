@@ -4,15 +4,17 @@ import { useState, useEffect } from 'react';
 const Home = () => {
     const [responseMessage, setResponseMessage] = useState('');
     const [ledStatus, setLedStatus] = useState(null);
-    const [sensorStatus, setSensorStatus] = useState({ flame: 'Not Detect', vibration: 'Not Detect' });
+    const [sensorStatus, setSensorStatus] = useState({ flame: 'Loading...', vibration: 'Loading...' });
 
     useEffect(() => {
         // Fetch initial sensor status
-        const fetchSensorData = async () => {
+        const fetchRecentData = async () => {
             try {
-                const response = await fetch('/api/sensordata');
+                const response = await fetch('/api/getrecent');
                 if (!response.ok) throw new Error('Failed to fetch sensor data');
                 const data = await response.json();
+                
+                console.log('Fetched sensor data:', data);
                 
                 // Update sensor status based on received data
                 setSensorStatus({
@@ -21,15 +23,14 @@ const Home = () => {
                 });
 
                 // Update LED status
-                setLedStatus(data.led_status);
+                console.log(data)
             } catch (error) {
                 console.error('Error:', error);
+                setSensorStatus({ flame: 'Error', vibration: 'Error' });
             }
         };
 
-        fetchSensorData();
-        const interval = setInterval(fetchSensorData, 3000); // Refresh every 3 seconds
-        return () => clearInterval(interval);
+        fetchRecentData();
     }, []);
 
     const handleUpdate = async (ledStatus) => {
