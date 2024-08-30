@@ -16,8 +16,8 @@ const Home = () => {
                 
                 // Update sensor status based on received data
                 setSensorStatus({
-                    flame: data.flame_status === 0 ? 'Detect' : 'Not Detect',
-                    vibration: data.vibration_status === 1 ? 'Detect' : 'Not Detect'
+                    flame: data.flame_status === "0" ? 'Detect' : 'Not Detect',
+                    vibration: data.vibration_status === "1" ? 'Detect' : 'Not Detect'
                 });
 
                 // Update LED status
