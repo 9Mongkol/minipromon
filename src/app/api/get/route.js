@@ -1,29 +1,35 @@
-export async function GET(request) {
-  try {
-      const result = await client.query('SELECT led_status FROM sensor_data WHERE id = 1 ORDER BY id DESC LIMIT 1');
+// pages/api/sensordata.js
 
-      if (result.rows.length === 0) {
-          return new Response(JSON.stringify({ error: "No data found" }), {
-              status: 404,
-              headers: { ...corsHeaders, "Content-Type": "application/json" },
-          });
-      }
+import { Pool } from 'pg';
 
-      const ledStatus = result.rows[0].led_status;
+// อ่านค่าการเชื่อมต่อจาก environment variable
+const DATABASE_URL = process.env.DATABASE_URL;
 
-      return new Response(JSON.stringify({ led_status: ledStatus }), {
-          status: 200,
-          headers: {
-              ...corsHeaders,
-              "Content-Type": "application/json",
-              "Cache-Control": "no-cache"
-          },
+// ตั้งค่าการเชื่อมต่อกับ PostgreSQL
+const client = new Pool({
+  connectionString: DATABASE_URL,
+});
+
+export async function GET() {
+    try {
+      const result = await client.query(`
+        SELECT * 
+        FROM sensor_data
+      `);
+      return new Response(JSON.stringify(result.rows), {
+        status: 200,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          "Content-Type": "application/json",
+          "Cache-Control": "no-cache"
+        },
       });
-  } catch (error) {
-      console.error("Error retrieving LED status:", error);
+    } catch (error) {
+  
       return new Response(JSON.stringify({ error: "Internal Server Error" }), {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 500,
+        headers: { 'Access-Control-Allow-Origin': '*', "Content-Type": "application/json" },
       });
+    }
   }
-}
+  

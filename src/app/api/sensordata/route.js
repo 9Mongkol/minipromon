@@ -49,11 +49,12 @@ export async function POST(request) {
         });
     }
 }
+//------------------------------------------------------------------------------------------------
 
 export async function GET(request) {
     try {
-        // Query the database for the latest led_status, flame_status, and vibration_status
-        const result = await client.query('SELECT led_status, flame_status, vibration_status FROM sensor_data WHERE id = 1 ORDER BY id DESC LIMIT 1');
+        // Query the database for the latest led_status
+        const result = await client.query('SELECT led_status FROM sensor_data WHERE id = 1 ORDER BY id DESC LIMIT 1');
 
         if (result.rows.length === 0) {
             return new Response(JSON.stringify({ error: "No data found" }), {
@@ -62,7 +63,9 @@ export async function GET(request) {
             });
         }
 
-        return new Response(JSON.stringify(result.rows[0]), {
+        const ledStatus = result.rows[0].led_status;
+
+        return new Response(JSON.stringify({ led_status: ledStatus }), {
             status: 200,
             headers: {
                 ...corsHeaders,
@@ -71,24 +74,29 @@ export async function GET(request) {
             },
         });
     } catch (error) {
-        console.error("Error retrieving sensor status:", error);
+        console.error("Error retrieving LED status:", error);
         return new Response(JSON.stringify({ error: "Internal Server Error" }), {
             status: 500,
             headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
     }
 }
+//-----------------------------------------------------------------------------------
+// pages/api/updateLedStatus.js
 
 export async function PUT(request) {
     try {
+        // Parse the request body as JSON
         const requestBody = await request.json();
         const { led_status } = requestBody;
 
+        // Update the led_status in the database
         const result = await client.query(
-            'UPDATE sensor_data SET led_status = $1 WHERE id = 1 RETURNING *',
+            'UPDATE sensor_data SET led_status = $1 WHERE id = 1  RETURNING *',
             [led_status]
         );
 
+        // Check if update was successful
         if (result.rowCount === 0) {
             return new Response(JSON.stringify({ error: "Sensor ID not found" }), {
                 status: 404,
