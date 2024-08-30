@@ -3,12 +3,32 @@ import { useState, useEffect } from 'react';
 
 const Home = () => {
     const [responseMessage, setResponseMessage] = useState('');
-    const [sensorStatus, setSensorStatus] = useState({ flame: 'Loading...', vibration: 'Loading...' });
+    const [sensorStatus, setSensorStatus] = useState({ flame_status: 'Unknown', vibration_status: 'Unknown' });
+    const [ledStatus, setLedStatus] = useState('Unknown');
+    const [history, setHistory] = useState([]);
 
-    // ฟังก์ชันอัปเดตสถานะ LED
+    useEffect(() => {
+        // Fetch the initial sensor and LED statuses
+        const fetchStatus = async () => {
+            try {
+                const sensorResponse = await fetch('/api/sensordata');
+                const ledResponse = await fetch('/api/getLedStatus');
+                if (sensorResponse.ok && ledResponse.ok) {
+                    const sensorData = await sensorResponse.json();
+                    const ledData = await ledResponse.json();
+                    setSensorStatus(sensorData);
+                    setLedStatus(ledData.led_status);
+                }
+            } catch (error) {
+                console.error('Error fetching initial statuses:', error);
+            }
+        };
+        fetchStatus();
+    }, []);
+
     const handleUpdate = async (ledStatus) => {
         try {
-            const response = await fetch('/api/sensordata', {
+            const response = await fetch('/api/updateLedStatus', {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -24,94 +44,47 @@ const Home = () => {
 
             const data = await response.json();
             setResponseMessage(`LED status updated to ${data.led_status}`);
+            setLedStatus(data.led_status);
+            setHistory((prevHistory) => [
+                ...prevHistory,
+                { timestamp: new Date().toLocaleString(), action: `LED set to ${data.led_status}` },
+            ]);
         } catch (error) {
             console.error('Error:', error);
             setResponseMessage('Error updating LED status');
         }
     };
 
-    // ฟังก์ชันดึงข้อมูลสถานะเซนเซอร์
-    const fetchSensorStatus = async () => {
-        try {
-            const response = await fetch('/api/sensordata');
-            if (!response.ok) {
-                throw new Error('Failed to fetch sensor status');
-            }
-
-            const data = await response.json();
-            setSensorStatus({
-                flame: data.flame_status === '1' ? 'Detected' : 'Not Detected',
-                vibration: data.vibration_status === '1' ? 'Detected' : 'Not Detected',
-            });
-        } catch (error) {
-            console.error('Error:', error);
-            setSensorStatus({ flame: 'Error', vibration: 'Error' });
-        }
-    };
-
-    // เรียกใช้ฟังก์ชัน fetchSensorStatus เมื่อ component ถูก mount
-    useEffect(() => {
-        fetchSensorStatus();
-    }, []);
-
     return (
-        <div style={styles.container}>
-            <h1 style={styles.header}>LED & Sensor Control</h1>
-            <div style={styles.buttonContainer}>
-                <button style={styles.button} onClick={() => handleUpdate(1)}>Turn LED ON</button>
-                <button style={styles.button} onClick={() => handleUpdate(0)}>Turn LED OFF</button>
+        <div style={{ color: 'black' }}>
+            <h1>LED & Sensor Control Panel</h1>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
+                <div style={{ border: '1px solid #ccc', padding: '10px', borderRadius: '5px', width: '45%' }}>
+                    <h2>Sensor Status</h2>
+                    <p>Flame Sensor: {sensorStatus.flame_status ? 'Detected' : 'Not Detected'}</p>
+                    <p>Vibration Sensor: {sensorStatus.vibration_status ? 'Detected' : 'Not Detected'}</p>
+                </div>
+
+                <div style={{ border: '1px solid #ccc', padding: '10px', borderRadius: '5px', width: '45%' }}>
+                    <h2>LED Control</h2>
+                    <button onClick={() => handleUpdate(1)}>Turn LED ON</button>
+                    <button onClick={() => handleUpdate(0)}>Turn LED OFF</button>
+                    <p>{responseMessage}</p>
+                    <p>Current LED Status: {ledStatus ? 'ON' : 'OFF'}</p>
+                </div>
             </div>
-            <p style={styles.response}>{responseMessage}</p>
-            <div style={styles.sensorContainer}>
-                <h2>Sensor Status</h2>
-                <p>Flame Sensor: {sensorStatus.flame}</p>
-                <p>Vibration Sensor: {sensorStatus.vibration}</p>
+
+            <div style={{ border: '1px solid #ccc', padding: '10px', borderRadius: '5px' }}>
+                <h2>History</h2>
+                <ul>
+                    {history.map((entry, index) => (
+                        <li key={index}>{entry.timestamp}: {entry.action}</li>
+                    ))}
+                </ul>
             </div>
         </div>
     );
-};
-
-// สไตล์สำหรับตกแต่งหน้าเว็บ
-const styles = {
-    container: {
-        fontFamily: 'Arial, sans-serif',
-        maxWidth: '600px',
-        margin: '0 auto',
-        padding: '20px',
-        backgroundColor: '#f4f4f4',
-        borderRadius: '10px',
-        boxShadow: '0px 0px 10px rgba(0,0,0,0.1)',
-        textAlign: 'center',
-    },
-    header: {
-        fontSize: '24px',
-        marginBottom: '20px',
-        color: '#333',
-    },
-    buttonContainer: {
-        marginBottom: '20px',
-    },
-    button: {
-        padding: '10px 20px',
-        margin: '5px',
-        fontSize: '16px',
-        borderRadius: '5px',
-        border: 'none',
-        backgroundColor: '#4CAF50',
-        color: 'white',
-        cursor: 'pointer',
-    },
-    response: {
-        fontSize: '16px',
-        color: '#555',
-        marginTop: '20px',
-    },
-    sensorContainer: {
-        marginTop: '20px',
-        padding: '10px',
-        backgroundColor: '#e8e8e8',
-        borderRadius: '5px',
-    },
 };
 
 export default Home;
