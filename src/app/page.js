@@ -34,7 +34,7 @@ const Home = () => {
 
     const handleUpdate = async (ledStatus) => {
         try {
-            const response = await fetch('/api/updateLedStatus', {
+            const response = await fetch('/api/sensordata', {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
