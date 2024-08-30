@@ -8,7 +8,7 @@ const Home = () => {
     const [sensorDataHistory, setSensorDataHistory] = useState([]);
 
     useEffect(() => {
-        // Fetch initial sensor status
+        // Fetch initial sensor status and led status
         const fetchRecentData = async () => {
             try {
                 const response = await fetch('/api/getrecent');
@@ -22,9 +22,12 @@ const Home = () => {
                     flame: data.flame_status === "0" ? 'Detect' : 'Not Detect',
                     vibration: data.vibration_status === "1" ? 'Detect' : 'Not Detect'
                 });
-    
-                // Update LED status
-                setLedStatus(data.led_status);
+
+                // Fetch LED status from /api/sensordata
+                const ledResponse = await fetch('/api/sensordata');
+                if (!ledResponse.ok) throw new Error('Failed to fetch LED status');
+                const ledData = await ledResponse.json();
+                setLedStatus(ledData.led_status);
 
                 // Fetch historical data
                 const historyResponse = await fetch('/api/gethistory');
@@ -45,7 +48,6 @@ const Home = () => {
     
         return () => clearInterval(intervalId);
     }, []);
-    
 
     const handleUpdate = async (ledStatus) => {
         try {
@@ -100,29 +102,29 @@ const Home = () => {
                         Turn LED OFF
                     </button>
                     <p style={{ marginTop: '10px', color: '#e0e0e0' }}>{responseMessage}</p>
-                    <p style={{ marginTop: '10px', fontWeight: 'bold' }}>Current LED Status: {ledStatus === 1 ? 'ON' : 'OFF'}</p>
+                    <p style={{ marginTop: '10px', fontWeight: 'bold' }}>Current LED Status: {ledStatus === 1 ? 'ON' : ledStatus === 0 ? 'OFF' : 'Loading...'}</p>
                 </div>
             </div>
 
             <h2 style={{ color: '#00e676', marginBottom: '10px' }}>Sensor Data History</h2>
-                <table style={{ width: '100%', borderCollapse: 'collapse', backgroundColor: '#1e1e1e' }}>
-                    <thead>
-                        <tr>
-                            <th style={{ padding: '10px', border: '1px solid #2c2c2c', color: '#e0e0e0' }}>Timestamp</th>
-                            <th style={{ padding: '10px', border: '1px solid #2c2c2c', color: '#e0e0e0' }}>Flame Status</th>
-                            <th style={{ padding: '10px', border: '1px solid #2c2c2c', color: '#e0e0e0' }}>Vibration Status</th>
+            <table style={{ width: '100%', borderCollapse: 'collapse', backgroundColor: '#1e1e1e' }}>
+                <thead>
+                    <tr>
+                        <th style={{ padding: '10px', border: '1px solid #2c2c2c', color: '#e0e0e0' }}>Timestamp</th>
+                        <th style={{ padding: '10px', border: '1px solid #2c2c2c', color: '#e0e0e0' }}>Flame Status</th>
+                        <th style={{ padding: '10px', border: '1px solid #2c2c2c', color: '#e0e0e0' }}>Vibration Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {sensorDataHistory.map((entry, index) => (
+                        <tr key={index}>
+                            <td style={{ padding: '10px', border: '1px solid #2c2c2c', color: '#e0e0e0' }}>{entry.timestamp}</td>
+                            <td style={{ padding: '10px', border: '1px solid #2c2c2c', color: '#e0e0e0' }}>{entry.flame_status === "0" ? 'Detect' : 'Not Detect'}</td>
+                            <td style={{ padding: '10px', border: '1px solid #2c2c2c', color: '#e0e0e0' }}>{entry.vibration_status === "1" ? 'Detect' : 'Not Detect'}</td>
                         </tr>
-                    </thead>
-                    <tbody>
-                        {sensorDataHistory.map((entry, index) => (
-                            <tr key={index}>
-                                <td style={{ padding: '10px', border: '1px solid #2c2c2c', color: '#e0e0e0' }}>{entry.timestamp}</td>
-                                <td style={{ padding: '10px', border: '1px solid #2c2c2c', color: '#e0e0e0' }}>{entry.flame_status === "0" ? 'Detect' : 'Not Detect'}</td>
-                                <td style={{ padding: '10px', border: '1px solid #2c2c2c', color: '#e0e0e0' }}>{entry.vibration_status === "1" ? 'Detect' : 'Not Detect'}</td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
+                    ))}
+                </tbody>
+            </table>
 
         </div>
     );
